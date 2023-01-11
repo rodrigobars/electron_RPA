@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <meta
+      http-equiv="X-Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <title>App-Uff</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300&display=swap" rel="stylesheet">
+    <style> @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300&display=swap'); </style>
+  </head>
+  <body>
+    <div class="screen">
+      <div class="ghost-movable"></div>
+      <div class="tela-principal">
+        <div class="tela-principal-box">
+          <div class="info-div">
+            <label class="label_num_pregao" for="num_pregao">n° do pregão</label>
+            <input type="text" id="input_num_pregao" placeholder="Exemplo: 242022">
+          </div>
+          <button id="submit_button" type="submit">Start</button>
+        </div>
+      </div>
+  
+      <div class="tela-auxiliar">
+      </div>
+    </div>
+    
+    <div class="side-buttons">
+      <button class="close"></button>
+      <button class="minimize"></button>
+      <button class="btn-expand" data-clicked="false"></button>
+      <button class="drag"></button>
+    </div>
+
+  </body>
+  <script src="../js/renderer.js"></script>
+</html>

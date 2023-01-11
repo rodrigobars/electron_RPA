@@ -1,0 +1,17 @@
+{
+  "name": "app-electron",
+  "version": "1.0.0",
+  "description": "Meu aplicativo RPA",
+  "main": "main/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "Rodrigo B",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^22.0.0"
+  },
+  "dependencies": {
+    "chart.js": "^4.1.2"
+  }
+}
