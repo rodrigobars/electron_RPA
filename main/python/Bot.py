@@ -35,24 +35,35 @@ class Bot():
 
         self.driver.get(url)
 
-    def catch_element(self, xpath: str, amount="one", maxWaitTime=10) -> None:
+    def catch_element(self, use: str, amount="one", maxWaitTime=10, method='xpath') -> None:
         """
+        method (str): ['xpath', 'class_name', 'css_selector', 'id', 'name']
+
         - Find for an element if amount=='one' or elements if amount=='all' by XPATH and store on caught
         """
-        try:
-            if amount in ['one', 'all']:
-                if amount == 'one':
-                    return WebDriverWait(self.driver, maxWaitTime).until(
-                        EC.presence_of_element_located((By.XPATH, xpath))
-                    )
+        if method in (elements := ['xpath', 'class_name', 'css_selector', 'id', 'name']) or method in [x.upper() for x in elements]:
+            method = method.upper()
+            if method=='XPATH': method = 'By.XPATH'
+            if method=='CLASS_NAME': method = 'By.CLASS_NAME'
+            if method=='CSS_SELECTOR': method = 'By.CSS_SELECTOR'
+            if method=='ID': method = 'By.ID'
+            if method=='NAME': method = 'By.NAME'
+
+            try:
+                if amount in ['one', 'all']:
+                    if amount == 'one':
+                        return WebDriverWait(self.driver, maxWaitTime).until(
+                            EC.presence_of_element_located((eval(method), use))
+                        )
+                    else:
+                        return WebDriverWait(self.driver, maxWaitTime).until(
+                            EC.presence_of_all_elements_located((eval(method), use))
+                        )
                 else:
-                    return WebDriverWait(self.driver, maxWaitTime).until(
-                        EC.presence_of_all_elements_located((By.XPATH, xpath))
-                    )
-            else:
-                raise IncorrectAmount
-        except IncorrectAmount as e:
-            print(e)
+                    raise IncorrectAmount
+            except IncorrectAmount as e:
+                print(e)
+        else: raise TypeError("argumento fornecido é inválido para o parâmetro 'method'")
 
     def javascript(self, script):
         self.driver.execute_script(script)

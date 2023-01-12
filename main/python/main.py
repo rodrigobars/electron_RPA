@@ -1,4 +1,5 @@
 from Bot import Bot
+from helper import todos_pregoes
 import re
 import sys
 import pandas as pd
@@ -17,11 +18,14 @@ def pregao_extract_data(bot, pregao):
             valor = float(valor.replace(',', '.'))
             return valor
         except:
-            # Amount
-            quantidade = numero.replace('.', '')
-            quantidade = re.search(r'\d+', quantidade)
-            quantidade = int(quantidade.group())
-            return quantidade
+            try:
+                # Amount
+                quantidade = numero.replace('.', '')
+                quantidade = re.search(r'\d+', quantidade)
+                quantidade = int(quantidade.group())
+                return quantidade
+            except:
+                return ''
 
     def parse_item(item) -> dict:
         splited_item = item.split("\n")
@@ -52,37 +56,58 @@ def pregao_extract_data(bot, pregao):
     navigation_xpath = {
         "uasg": "//input[@id='co_uasg']",
         "num_pregao": "//input[@id='numprp']",
+        "verificacao_inexistencia_ata": "//center[@class='mensagem'][contains(text(), 'Nenhuma Ata Encontrada.')]",
         "select_pregao": f"//a[contains(text(), '{pregao}')]",
         "verificacao_SRP": "//span[contains(text(), 'SRP')]",
-        "button_adjudicacao": "//input[@id='btnTermAdj']",
+        "verificacao_existencia_de_botão_adjudicacao": "//input[@id='btnTermAdj']",
         "verificacao_existencia_adjudicacao": "//tr[@class='mensagem']/td[@align='center']",
+        "button_adjudicacao": "//input[@id='btnTermAdj']",
         "todos_itens": "//table[@class=\"td\" and @cellspacing=0]/tbody"
     }
 
     # começa a navegação
-    bot.catch_element(xpath=navigation_xpath["uasg"]).send_keys("150182")
+    bot.catch_element(use=navigation_xpath["uasg"]).send_keys("150182")
 
-    bot.catch_element(xpath=navigation_xpath["num_pregao"]).send_keys(pregao)
+    bot.catch_element(use=navigation_xpath["num_pregao"]).send_keys(pregao)
     bot.javascript("ValidaForm();")
 
-    bot.catch_element(xpath=navigation_xpath["select_pregao"]).click()
-
     try:
-        bot.catch_element(xpath=navigation_xpath["verificacao_SRP"], maxWaitTime=3)
-    except:
-        print(f"O pregão {pregao} não é SRP, prosseguindo...") 
-        return False
-
-    bot.catch_element(xpath=navigation_xpath["button_adjudicacao"]).click()
-
-    try:
-        bot.catch_element(xpath=navigation_xpath["verificacao_existencia_adjudicacao"], maxWaitTime=3)
-        print(f"O pregão {pregao} não possui itens adjudicados, prosseguindo...") 
+        bot.catch_element(use=navigation_xpath["verificacao_inexistencia_ata"], maxWaitTime=2)
+        print(f"O pregão {pregao} não existe, prosseguindo...")
         return False
     except:
         pass
 
-    todos_itens = bot.catch_element(xpath=navigation_xpath["todos_itens"], amount='all')
+    bot.catch_element(use=navigation_xpath["select_pregao"]).click()
+
+    try:
+        bot.catch_element(use=navigation_xpath["verificacao_SRP"], maxWaitTime=2)
+    except:
+        print(f"O pregão {pregao} não é SRP, prosseguindo...") 
+        return False
+
+    # Verificando existência do botão de adjudicação
+    try:
+        # Se o botão estiver disponível, ele prosseguirá
+        bot.catch_element(use=navigation_xpath["verificacao_existencia_de_botão_adjudicacao"], maxWaitTime=2)
+    except:
+        # Caso contrário, ele retornará como falso para poder pular o pregão
+        print(f"O pregão {pregao} não possui itens adjudicados, prosseguindo...") 
+        return False
+
+    # Caso existe o botão de adjudicação, é verificado se algum item foi adjudicado de fato
+    try:
+        # Procura pela mensagem que informa a ausência de adjudicação, caso encontre ele pula o pregão
+        bot.catch_element(use=navigation_xpath["verificacao_existencia_adjudicacao"], maxWaitTime=2)
+        print(f"O pregão {pregao} não possui itens adjudicados, prosseguindo...") 
+        return False
+    except:
+        # Caso não encontre a mensagem, significa que ao menos um item foi adjudicado pelo orgão público
+        pass
+
+    bot.catch_element(use=navigation_xpath["button_adjudicacao"]).click()
+
+    todos_itens = bot.catch_element(use=navigation_xpath["todos_itens"], amount='all')
 
     itens_list = []
 
@@ -100,13 +125,6 @@ def pregao_extract_data(bot, pregao):
     # Criar um DataFrame a partir da lista de dicionários
     # Retorna um dataframe
     return pd.DataFrame.from_dict(itens_list)
-
-# sys.argv[0] trás o caminho completo do arquivo python que ele quer executar
-pregoes = sys.argv[1:]
-
-# Inicia o bot
-bot = Bot()
-bot.start(headless=False)
 
 # Cria um novo livro do Excel vazio
 workbook = openpyxl.Workbook()
@@ -131,6 +149,16 @@ worksheet['O1'] = "Valor"
 
 # Alterando o zoom inicial
 worksheet.sheet_view.zoomScale = 70
+
+# Inicia o bot
+bot = Bot()
+bot.start(headless=False)
+
+# sys.argv[0] trás o caminho completo do arquivo python que ele quer executar
+#ano = sys.argv[1:]
+uasg = 150182
+
+pregoes = todos_pregoes(bot=bot, uasg=uasg)
 
 # Adiciona os dados do seu DataFrame à planilha
 for pregao in pregoes:
