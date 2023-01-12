@@ -54,15 +54,15 @@ def pregao_extract_data(bot, pregao):
     bot.get(url)
 
     navigation_xpath = {
-        "uasg": "//input[@id='co_uasg']",
-        "num_pregao": "//input[@id='numprp']",
-        "verificacao_inexistencia_ata": "//center[@class='mensagem'][contains(text(), 'Nenhuma Ata Encontrada.')]",
-        "select_pregao": f"//a[contains(text(), '{pregao}')]",
-        "verificacao_SRP": "//span[contains(text(), 'SRP')]",
-        "verificacao_existencia_de_botão_adjudicacao": "//input[@id='btnTermAdj']",
-        "verificacao_existencia_adjudicacao": "//tr[@class='mensagem']/td[@align='center']",
-        "button_adjudicacao": "//input[@id='btnTermAdj']",
-        "todos_itens": "//table[@class=\"td\" and @cellspacing=0]/tbody"
+        "uasg": "//input[@id='co_uasg']", # Informa a uasg
+        "num_pregao": "//input[@id='numprp']", # Informa o número do pregão
+        "verificacao_inexistencia_ata": "//center[@class='mensagem'][contains(text(), 'Nenhuma Ata Encontrada.')]", # Verifica se não existe ata de pregão
+        "select_pregao": f"//a[contains(text(), '{pregao}')]", # Seleciona o pregão
+        "verificacao_SRP": "//span[contains(text(), 'SRP')]", # Verifica se o pregão se trata de Sistema de Registro de Preço
+        "verificacao_existencia_de_botão_adjudicacao": "//input[@id='btnTermAdj']", # Verificando a existência do botão
+        "button_adjudicacao": "//input[@id='btnTermAdj']",  # Clickando no botão
+        "verificacao_existencia_adjudicacao": "//tr[@class='mensagem']/td[@align='center']", # Verificando a existência de item adjudicado
+        "todos_itens": "//table[@class=\"td\" and @cellspacing=0]/tbody" # Obtendo todos os itens
     }
 
     # começa a navegação
@@ -95,17 +95,18 @@ def pregao_extract_data(bot, pregao):
         print(f"O pregão {pregao} não possui itens adjudicados, prosseguindo...") 
         return False
 
+    bot.catch_element(use=navigation_xpath["button_adjudicacao"]).click()
+
     # Caso existe o botão de adjudicação, é verificado se algum item foi adjudicado de fato
     try:
         # Procura pela mensagem que informa a ausência de adjudicação, caso encontre ele pula o pregão
-        bot.catch_element(use=navigation_xpath["verificacao_existencia_adjudicacao"], maxWaitTime=2)
+        msg = bot.catch_element(use=navigation_xpath["verificacao_existencia_adjudicacao"], maxWaitTime=2)
         print(f"O pregão {pregao} não possui itens adjudicados, prosseguindo...") 
+        print(msg.text)
         return False
     except:
         # Caso não encontre a mensagem, significa que ao menos um item foi adjudicado pelo orgão público
         pass
-
-    bot.catch_element(use=navigation_xpath["button_adjudicacao"]).click()
 
     todos_itens = bot.catch_element(use=navigation_xpath["todos_itens"], amount='all')
 
@@ -158,6 +159,7 @@ bot.start(headless=False)
 #ano = sys.argv[1:]
 uasg = 150182
 
+# Lembrando que se existir apenas 1 pregão, é necessário que ele seja uma lista
 pregoes = todos_pregoes(bot=bot, uasg=uasg)
 
 # Adiciona os dados do seu DataFrame à planilha
@@ -169,11 +171,11 @@ for pregao in pregoes:
         for row in df.values:
             worksheet.append(row.tolist())
             
-
 worksheet = modify(worksheet, index=1, on_horizontal_direction=True, hOrientation='center', vOrientation='center', wrap_text=True, font_bold=True, row_space=60, cell_color='f5425a', border=True)
 worksheet = modify(worksheet, index=1, hOrientation='center', vOrientation='center', cell_color='A5B0A2', font_bold=True, row_space=140, col_space=7, border=True)
 worksheet = modify(worksheet, index=[2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], hOrientation='center', vOrientation='center', border=True, col_space=15, wrap_text=True)
 worksheet = modify(worksheet, index=[3, 4], border=True, col_space=30, wrap_text=True)
 worksheet = modify(worksheet, index=5, border=True, col_space=15, wrap_text=True)
 
+# É necessário verificar a existência de conteúdo antes de salvar
 workbook.save("extract_data.xlsx")

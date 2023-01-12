@@ -3,6 +3,7 @@ const { spawn } = require("child_process")
 const path = require('path')
 
 let win;
+// let newWindow
 const createWindow = () => {
     win = new BrowserWindow({
         width: 440,
@@ -10,11 +11,8 @@ const createWindow = () => {
         title: 'App-Uff',
         hasShadow: true,
         //alwaysOnTop: true,
-        //darkTheme: true,
-        //opacity: 0.95,
         titleBarOverlay: false,
         resizable: false,
-        //titleBarStyle: "hidden",
         transparent: true,
         frame:false,
         webPreferences: {
@@ -34,6 +32,8 @@ const createWindow = () => {
     // Modifica o posicionamento da janela
     win.setPosition(x, y);
     win.loadFile(path.join(__dirname, 'html/index.html'))
+    // newWindow = new BrowserWindow({width: 300, height: 200, modal: false, show: false});
+    // newWindow.setParentWindow(win)
 }
 
 app.whenReady().then(() => {
@@ -99,9 +99,12 @@ ipcMain.handle('minimize', () => {
 })
 
 ipcMain.handle('openMainPy', (event, num_pregao) => {
+    // newWindow.loadURL("https://www.google.com.br");
+    // newWindow.show();
+
     const pythonProcess = spawn('python', [path.join(__dirname, '/python/main.py'), num_pregao])
     pythonProcess.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
+        console.log(`stdout:\n ${data}`);
     });
     
     pythonProcess.stderr.on('data', (data) => {
