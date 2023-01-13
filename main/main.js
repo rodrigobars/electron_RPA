@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, screen  } = require('electron')
 const { spawn } = require("child_process")
 const path = require('path');
 
-let win;
+let win
 let newWindow
 
 const createWindow = () => {
@@ -11,7 +11,6 @@ const createWindow = () => {
         height: 620,
         title: 'App-Uff',
         hasShadow: true,
-        //alwaysOnTop: true,
         titleBarOverlay: false,
         resizable: false,
         transparent: true,
@@ -31,8 +30,6 @@ const createWindow = () => {
     win.loadFile(path.join(__dirname, 'html/index.html'))
 
     win.on('move', () => {
-        console.log('moving...')
-
         set_newWindow_Position()
     })
 
