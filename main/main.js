@@ -3,7 +3,8 @@ const { spawn } = require("child_process")
 const path = require('path')
 
 let win;
-// let newWindow
+let newWindow
+
 const createWindow = () => {
     win = new BrowserWindow({
         width: 440,
@@ -23,17 +24,33 @@ const createWindow = () => {
     })
     // Obtém as dimensões da tela atual
     let screenSize = screen.getPrimaryDisplay().workAreaSize;
-
+    
     // Calcula as coordenadas x e y da janela
-    //let x = (screenSize.width - win.getSize()[0]);
-    let x = 50
+    // let x = (screenSize.width - win.getSize()[0]);
+    let x = 50;
     let y = (screenSize.height / 2) - (win.getSize()[1] / 2);
 
     // Modifica o posicionamento da janela
     win.setPosition(x, y);
     win.loadFile(path.join(__dirname, 'html/index.html'))
-    // newWindow = new BrowserWindow({width: 300, height: 200, modal: false, show: false});
-    // newWindow.setParentWindow(win)
+
+    newWindow = new BrowserWindow({
+        width: 700,
+        height: 490,
+        parent: win,
+        show: false,
+        modal: false,
+        titleBarOverlay: false,
+        resizable: false,
+        transparent: false,
+        frame: false,
+    });
+
+    win.on('move', () => {
+        console.log('moving...')
+
+        set_newWindow_Position()
+    })
 }
 
 app.whenReady().then(() => {
@@ -55,11 +72,11 @@ let expanded = false
 ipcMain.handle('expand_screen', () => {
     console.log('Opening...')
     const { width, height } = win.getBounds()
-
+    
     let targetWidth = (width * 3) - 100
     let currentWidth = width
-    let step = 80
 
+    let step = 80
     if (!expanded) {
         const interval = setInterval(() => {
             if (currentWidth >= targetWidth) {
@@ -73,7 +90,11 @@ ipcMain.handle('expand_screen', () => {
             })
         }, 10)
         expanded = true
+        set_newWindow_Position()
+        newWindow.show()
     }else{
+        set_newWindow_Position()
+        newWindow.hide()
         console.log('closing...')
         const interval = setInterval(() => {
             if (currentWidth <= 440) {
@@ -99,10 +120,13 @@ ipcMain.handle('minimize', () => {
 })
 
 ipcMain.handle('openMainPy', (event, num_pregao) => {
-    // newWindow.loadURL("https://www.google.com.br");
-    // newWindow.show();
 
-    const pythonProcess = spawn('python', [path.join(__dirname, '/python/main.py'), num_pregao])
+    set_newWindow_Position()
+
+    newWindow.loadURL("http://localhost:5000");
+    newWindow.show();
+
+    const pythonProcess = spawn('python', [path.join(__dirname, '/python/testeflask.py'), num_pregao])
     pythonProcess.stdout.on('data', (data) => {
         console.log(`stdout:\n ${data}`);
     });
@@ -115,3 +139,11 @@ ipcMain.handle('openMainPy', (event, num_pregao) => {
         console.log(`child process exited with code ${code}`);
     });
 })
+
+function set_newWindow_Position() {
+    let position = win.getPosition();
+    let x = 440 + position[0] + 5
+    let y = position[1] + 70;
+
+    newWindow.setPosition(x, y);
+}
